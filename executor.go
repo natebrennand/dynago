@@ -38,7 +38,15 @@ type AwsRequester interface {
 }
 
 // Create an AWS executor with a specified endpoint and AWS parameters.
+//
+// NOTE: AWS requires that the endpoint ends in a '/'. If the slash is missing, Dynago
+// will append a '/' to your endpoint URL. This is to prevent a signature error from
+// occuring which will cause authentication to fail.
 func NewAwsExecutor(endpoint, region, accessKey, secretKey string) *AwsExecutor {
+	if len(endpoint) > 0 && endpoint[len(endpoint)-1] != '/' {
+		endpoint = endpoint + "/"
+	}
+
 	signer := aws.AwsSigner{
 		Region:    region,
 		AccessKey: accessKey,

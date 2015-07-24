@@ -1,9 +1,10 @@
 package dynago_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"gopkg.in/underarmour/dynago.v1"
 	"gopkg.in/underarmour/dynago.v1/schema"
