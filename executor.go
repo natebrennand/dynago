@@ -35,7 +35,7 @@ type SchemaExecutor interface {
 }
 
 type AwsRequester interface {
-	MakeRequest(target string, body []byte) (io.ReadCloser, error)
+	MakeRequest(target string, body []byte) (io.Reader, error)
 }
 
 // Create an AWS executor with a specified endpoint and AWS parameters.
@@ -69,7 +69,7 @@ type AwsExecutor struct {
 	Requester AwsRequester
 }
 
-func (e *AwsExecutor) makeRequest(target string, document interface{}) (io.ReadCloser, error) {
+func (e *AwsExecutor) makeRequest(target string, document interface{}) (io.Reader, error) {
 	buf, err := json.Marshal(document)
 	if err != nil {
 		return nil, err

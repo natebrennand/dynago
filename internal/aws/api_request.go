@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var MaxResponseSize int64 = 5 * 1024 * 1024 // 5MB maximum response
+
 const DynamoTargetPrefix = "DynamoDB_20120810." // This is the Dynamo API version we support
 
 type Signer interface {
@@ -35,7 +37,7 @@ type RequestMaker struct {
 	DebugFunc      func(string, ...interface{})
 }
 
-func (r *RequestMaker) MakeRequest(target string, body []byte) (io.ReadCloser, error) {
+func (r *RequestMaker) MakeRequest(target string, body []byte) (io.Reader, error) {
 	req, err := http.NewRequest("POST", r.Endpoint, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
@@ -64,5 +66,5 @@ func (r *RequestMaker) MakeRequest(target string, body []byte) (io.ReadCloser, e
 	if response.StatusCode != http.StatusOK {
 		return response.Body, r.BuildError(req, body, response)
 	}
-	return response.Body, err
+	return io.LimitReader(response.Body, MaxResponseSize), err
 }
