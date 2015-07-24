@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -25,7 +26,7 @@ type RequestMaker struct {
 	// These are required to be set
 	Endpoint   string
 	Signer     Signer
-	BuildError func(*http.Request, []byte, *http.Response, []byte) error
+	BuildError func(*http.Request, []byte, *http.Response) error
 
 	// These can be optionally set
 	Caller         http.Client
@@ -34,7 +35,7 @@ type RequestMaker struct {
 	DebugFunc      func(string, ...interface{})
 }
 
-func (r *RequestMaker) MakeRequest(target string, body []byte) ([]byte, error) {
+func (r *RequestMaker) MakeRequest(target string, body []byte) (io.ReadCloser, error) {
 	req, err := http.NewRequest("POST", r.Endpoint, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
@@ -53,25 +54,15 @@ func (r *RequestMaker) MakeRequest(target string, body []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	respBody, err := responseBytes(response)
-	if r.DebugResponses {
-		r.DebugFunc("Response: %#v\nBody:%s\n", response, respBody)
-	}
-	if response.StatusCode != http.StatusOK {
-		err = r.BuildError(req, body, response, respBody)
-	}
-	return respBody, err
-}
 
-func responseBytes(response *http.Response) (output []byte, err error) {
-	if response.ContentLength > 0 {
-		var buffer bytes.Buffer
-		buffer.Grow(int(response.ContentLength)) // avoid a ton of allocations
-		_, err = io.Copy(&buffer, response.Body)
-		if err == nil {
-			output = buffer.Bytes()
-			err = response.Body.Close()
-		}
+	if r.DebugResponses {
+		buf, _ := ioutil.ReadAll(response.Body)
+		r.DebugFunc("Response: %#v\nBody:%s\n", response, buf)
+		response.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 	}
-	return
+
+	if response.StatusCode != http.StatusOK {
+		return response.Body, r.BuildError(req, body, response)
+	}
+	return response.Body, err
 }

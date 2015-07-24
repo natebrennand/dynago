@@ -1,6 +1,8 @@
 package dynago
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -23,14 +25,19 @@ func TestErrorBuildError(t *testing.T) {
 	assert := assert.New(t)
 	input := `{"__type": "dynamodb#MissingAction", "message": "The FooBar happened."}`
 	req, _ := http.NewRequest("POST", "http://fake/fake", nil)
-	resp := &http.Response{}
-	err := buildError(req, nil, resp, []byte(input))
+	resp := &http.Response{
+		Body: ioutil.NopCloser(bytes.NewBuffer([]byte(input))),
+	}
+	err := buildError(req, nil, resp)
 	e := err.(*Error)
 	assert.Equal(ErrorInvalidParameter, e.Type)
 	assert.Equal([]byte(input), e.ResponseBody)
 	assert.Equal("MissingAction", e.Exception)
 
-	e = buildError(req, nil, resp, []byte("\n")).(*Error)
+	resp = &http.Response{
+		Body: ioutil.NopCloser(bytes.NewBuffer([]byte("\n"))),
+	}
+	e = buildError(req, nil, resp).(*Error)
 	assert.Equal(ErrorUnknown, e.Type)
 	assert.Equal("unexpected end of JSON input", e.Message)
 }

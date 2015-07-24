@@ -3,6 +3,7 @@ package dynago
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -43,15 +44,17 @@ func (e *Error) parse(input *inputError) {
 	}
 }
 
-func buildError(req *http.Request, body []byte, response *http.Response, respBody []byte) error {
+func buildError(req *http.Request, body []byte, response *http.Response) error {
+	// it is OK if the Body is empty so any errors are unconcerning
+	responseBody, _ := ioutil.ReadAll(response.Body)
 	e := &Error{
 		Request:      req,
 		RequestBody:  body,
 		Response:     response,
-		ResponseBody: respBody,
+		ResponseBody: responseBody,
 	}
 	dest := &inputError{}
-	if err := json.Unmarshal(respBody, dest); err == nil {
+	if err := json.Unmarshal(responseBody, dest); err == nil {
 		e.parse(dest)
 	} else {
 		e.Message = err.Error()

@@ -2,6 +2,7 @@ package dynago
 
 import (
 	"encoding/json"
+	"io"
 
 	"gopkg.in/underarmour/dynago.v1/internal/aws"
 	"gopkg.in/underarmour/dynago.v1/schema"
@@ -34,7 +35,7 @@ type SchemaExecutor interface {
 }
 
 type AwsRequester interface {
-	MakeRequest(target string, body []byte) ([]byte, error)
+	MakeRequest(target string, body []byte) (io.ReadCloser, error)
 }
 
 // Create an AWS executor with a specified endpoint and AWS parameters.
@@ -68,7 +69,7 @@ type AwsExecutor struct {
 	Requester AwsRequester
 }
 
-func (e *AwsExecutor) makeRequest(target string, document interface{}) ([]byte, error) {
+func (e *AwsExecutor) makeRequest(target string, document interface{}) (io.ReadCloser, error) {
 	buf, err := json.Marshal(document)
 	if err != nil {
 		return nil, err
@@ -83,13 +84,12 @@ and if the requester doesn't error, unmarshaling the response back into dest.
 This method is mostly exposed for those implementing custom executors or
 prototyping new functionality.
 */
-func (e *AwsExecutor) MakeRequestUnmarshal(method string, document interface{}, dest interface{}) (err error) {
+func (e *AwsExecutor) MakeRequestUnmarshal(method string, document interface{}, dest interface{}) error {
 	body, err := e.makeRequest(method, document)
 	if err != nil {
-		return
+		return err
 	}
-	err = json.Unmarshal(body, dest)
-	return
+	return json.NewDecoder(body).Decode(dest)
 }
 
 func (e *AwsExecutor) SchemaExecutor() SchemaExecutor {
