@@ -75,6 +75,19 @@ client.PutItem("person", doc).Execute()
 [dynagoNumber]: http://godoc.org/gopkg.in/underarmour/dynago.v1#Number
 [dynagoStringSet]: http://godoc.org/gopkg.in/underarmour/dynago.v1#StringSet
 
+Debugging
+---------
+
+Dynago can dump request or response information for you for use in debugging.
+Simply set `dynago.Debug` with the necessary flags:
+
+```go
+dynago.Debug = dynago.DebugRequests | dynago.DebugResponses
+```
+
+If you would like to change how the debugging is printed, please set `dynago.Debug` (`func(string, ...interface{})`) to your preference.
+
+
 Additional resources
 --------------------
  * [DynamoDB's own API reference][apireference] explains the operations that DynamoDB supports, and as such will provide more information on how specific parameters and values within dynago actually work.
@@ -88,3 +101,5 @@ The past, and the future
 Dynago came out of a dissatisfaction with the existing features of the major implementation of DynamoDB for Go that existed back in April 2015, because many operations used deprecated API's (at the time) and made it very difficult to know which operations we should actually use. Not to mention, the annoying parts of dealing with DynamoDB types.
 
 [AWS-SDK-Go](https://github.com/aws/aws-sdk-go) exists as of June 2015 and has a very up to date API, but it also comes with the pain of using bare structs which minimally wrap protocol-level details of DynamoDB, which makes it a pain to use for writing applications (dealing with DynamoDB's internal type system is boilerplatey). For this reason, there's still a reason for Dynago to exist, but once Amazon has trued up their SDK and brought it out of developer preview, the plan is to have Dynago use it as the underlying protocol and signature implementation, but keep providing dynago's clean and simple API for building queries and marshaling datatypes in dynamodb.
+
+

@@ -1,6 +1,7 @@
 package dynago
 
 import (
+	"log"
 	"strings"
 )
 
@@ -73,7 +74,9 @@ This is a set of bit-flags you can use to set up how much debugging dynago uses:
 var Debug DebugFlags
 
 // Set the target of debug. Must be set for debug to be used.
-var DebugFunc func(format string, v ...interface{})
+var DebugFunc func(format string, v ...interface{}) = func(format string, v ...interface{}) {
+	log.Printf("DEBUG:\n"+format, v...)
+}
 
 // Convenience method to check if a value has a flag:
 //    Debug.HasFlags(DebugRequests)
